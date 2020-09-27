@@ -6,6 +6,7 @@ import hashlib
 import logging
 import time
 import urllib.parse
+import socket
 
 import aiohttp
 import async_timeout
@@ -16,12 +17,12 @@ logger = logging.getLogger(__name__)
 CONNECT_TIMEOUT = 30
 REQUEST_TIMEOUT = 30
 MAX_RETRIES = 3
-ORIGIN_URL = 'https://hangouts.google.com'
+ORIGIN_URL = 'https://talkgadget.google.com'
 
 FetchResponse = collections.namedtuple('FetchResponse', ['code', 'body'])
 
 
-class Session:
+class Session(object):
     """Session for making HTTP requests to Google.
 
     Args:
@@ -32,7 +33,7 @@ class Session:
     def __init__(self, cookies, proxy=None):
         self._proxy = proxy
         timeout = aiohttp.ClientTimeout(connect=CONNECT_TIMEOUT)
-        self._session = aiohttp.ClientSession(timeout=timeout)
+        self._session = aiohttp.ClientSession(timeout=timeout, connector=aiohttp.TCPConnector(family=socket.AF_INET))
         self._cookies = cookies
         sapisid = cookies['SAPISID']
         self._authorization_headers = _get_authorization_headers(sapisid)
@@ -137,12 +138,12 @@ def _get_authorization_headers(sapisid_cookie):
     """Return authorization headers for API request."""
     # It doesn't seem to matter what the url and time are as long as they are
     # consistent.
-    time_sec = int(time.time())
-    auth_string = '{} {} {}'.format(time_sec, sapisid_cookie, ORIGIN_URL)
+    time_msec = int(time.time() * 1000)
+    auth_string = '{} {} {}'.format(time_msec, sapisid_cookie, ORIGIN_URL)
     auth_hash = hashlib.sha1(auth_string.encode()).hexdigest()
-    sapisidhash = 'SAPISIDHASH {}_{}'.format(time_sec, auth_hash)
+    sapisidhash = 'SAPISIDHASH {}_{}'.format(time_msec, auth_hash)
     return {
         'authorization': sapisidhash,
-        'origin': ORIGIN_URL,
+        'x-origin': ORIGIN_URL,
         'x-goog-authuser': '0',
     }
