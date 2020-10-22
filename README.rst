@@ -102,3 +102,7 @@ Related projects
 .. _hangupsjs: https://github.com/algesten/hangupsjs
 .. _purple-hangouts: https://github.com/EionRobb/purple-hangouts
 .. _slangouts: https://github.com/gpavlidi/slangouts
+
+Other
+-----
+This is a fork of Hangups that forces ipv4, which is faster in most cases.
